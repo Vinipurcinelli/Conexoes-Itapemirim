@@ -40,6 +40,8 @@ def encontrar_rotas_detalhadas(grafo, origem, destino, max_conexoes=3):
                     'linha': dados_aresta['linha']
                 })
             rotas_detalhadas.append(detalhes_rota)
+        # Ordenar as rotas pelo número de conexões (do menor para o maior)
+        rotas_detalhadas.sort(key=lambda rota: len(rota))
         return rotas_detalhadas
     except nx.NetworkXNoPath:
         return []
@@ -58,14 +60,50 @@ cidades_disponiveis = sorted(set(df['ORIGEM']).union(set(df['DESTINO'])))
 # Adicionar uma opção vazia no início da lista
 cidades_opcoes = [''] + cidades_disponiveis
 
-# Entrada de Origem e Destino com autocompletar e opção vazia
-origem = st.selectbox("Origem:", cidades_opcoes, index=0, format_func=lambda x: '' if x == '' else x)
-destino = st.selectbox("Destino:", cidades_opcoes, index=0, format_func=lambda x: '' if x == '' else x)
+# Inicializar session state para 'origem' e 'destino'
+if 'origem' not in st.session_state:
+    st.session_state['origem'] = ''
+if 'destino' not in st.session_state:
+    st.session_state['destino'] = ''
+
+# Criar colunas para 'Origem' e botão 'Limpar'
+col1, col4 = st.columns([4, 1])
+with col1:
+    # Entrada de Origem com autocompletar e opção vazia
+    st.session_state['origem'] = st.selectbox(
+        "Origem:",
+        cidades_opcoes,
+        index=cidades_opcoes.index(st.session_state['origem']) if st.session_state['origem'] in cidades_opcoes else 0,
+        key='origem_select',
+        format_func=lambda x: '' if x == '' else x
+    )
+with col4:
+    # Botão para limpar o campo Origem
+    if st.button("Limpar", key='limpar_origem'):
+        st.session_state['origem'] = ''
+
+# Criar colunas para 'Destino' e botão 'Limpar'
+col3, col2 = st.columns([4, 1])
+with col3:
+    # Entrada de Destino com autocompletar e opção vazia
+    st.session_state['destino'] = st.selectbox(
+        "Destino:",
+        cidades_opcoes,
+        index=cidades_opcoes.index(st.session_state['destino']) if st.session_state['destino'] in cidades_opcoes else 0,
+        key='destino_select',
+        format_func=lambda x: '' if x == '' else x
+    )
+with col2:
+    # Botão para limpar o campo Destino
+    if st.button("Limpar", key='limpar_destino'):
+        st.session_state['destino'] = ''
 
 # Selecionar o número máximo de conexões
 max_conexoes = st.selectbox("Número máximo de conexões:", options=[1, 2, 3, 4, 5], index=2)
 
 if st.button("Pesquisar"):
+    origem = st.session_state['origem']
+    destino = st.session_state['destino']
     if origem == '' or destino == '':
         st.error("Por favor, selecione tanto a cidade de origem quanto a de destino.")
     elif origem == destino:
@@ -81,7 +119,7 @@ if st.button("Pesquisar"):
         if rotas_detalhadas:
             st.write(f"Rotas encontradas de {origem} para {destino} (máximo de {max_conexoes} conexões):")
             for i, rota in enumerate(rotas_detalhadas, 1):
-                st.write(f"**Rota {i}:**")
+                st.write(f"Rota {i}")
                 for trecho in rota:
                     texto_trecho = f"- {trecho['origem']} -> {trecho['destino']} | Prefixo: {trecho['prefixo']} | Linha: {trecho['linha']}"
                     st.write(texto_trecho)
