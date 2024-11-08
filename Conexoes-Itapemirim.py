@@ -52,20 +52,31 @@ st.image(logo_path, width=150)
 
 st.title("Pesquisa de Rotas")
 
-# Entrada de Origem e Destino
-origem = st.text_input("Origem:").strip().upper()
-destino = st.text_input("Destino:").strip().upper()
+# Obter a lista de cidades disponíveis
+cidades_disponiveis = sorted(set(df['ORIGEM']).union(set(df['DESTINO'])))
+
+# Adicionar uma opção vazia no início da lista
+cidades_opcoes = [''] + cidades_disponiveis
+
+# Entrada de Origem e Destino com autocompletar e opção vazia
+origem = st.selectbox("Origem:", cidades_opcoes, index=0, format_func=lambda x: '' if x == '' else x)
+destino = st.selectbox("Destino:", cidades_opcoes, index=0, format_func=lambda x: '' if x == '' else x)
 
 # Selecionar o número máximo de conexões
 max_conexoes = st.selectbox("Número máximo de conexões:", options=[1, 2, 3, 4, 5], index=2)
 
 if st.button("Pesquisar"):
-    if origem not in G.nodes():
+    if origem == '' or destino == '':
+        st.error("Por favor, selecione tanto a cidade de origem quanto a de destino.")
+    elif origem == destino:
+        st.error("A cidade de origem e destino não podem ser a mesma.")
+    elif origem not in G.nodes():
         st.error(f"A cidade de origem '{origem}' não está na base de dados.")
     elif destino not in G.nodes():
         st.error(f"A cidade de destino '{destino}' não está na base de dados.")
     else:
-        rotas_detalhadas = encontrar_rotas_detalhadas(G, origem, destino, max_conexoes)
+        with st.spinner('Buscando rotas...'):
+            rotas_detalhadas = encontrar_rotas_detalhadas(G, origem, destino, max_conexoes)
 
         if rotas_detalhadas:
             st.write(f"Rotas encontradas de {origem} para {destino} (máximo de {max_conexoes} conexões):")
