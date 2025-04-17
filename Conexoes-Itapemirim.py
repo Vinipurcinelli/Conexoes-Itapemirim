@@ -18,7 +18,8 @@ for _, row in df.iterrows():
     destino = row['DESTINO']
     prefixo = row['PREFIXO']
     linha = row['LINHA']
-    G.add_edge(origem, destino, prefixo=prefixo, linha=linha)
+    empresa = row['EMPRESA']
+    G.add_edge(origem, destino, prefixo=prefixo, linha=linha, empresa=empresa)
 
 # Função para encontrar rotas com detalhes
 def encontrar_rotas_detalhadas(grafo, origem, destino, max_conexoes=3):
@@ -37,7 +38,8 @@ def encontrar_rotas_detalhadas(grafo, origem, destino, max_conexoes=3):
                     'origem': cidade_origem,
                     'destino': cidade_destino,
                     'prefixo': dados_aresta['prefixo'],
-                    'linha': dados_aresta['linha']
+                    'linha': dados_aresta['linha'],
+                    'empresa': dados_aresta['empresa']
                 })
             rotas_detalhadas.append(detalhes_rota)
         # Ordenar as rotas pelo número de conexões (do menor para o maior)
@@ -69,7 +71,6 @@ if 'destino' not in st.session_state:
 # Criar colunas para 'Origem' e botão 'Limpar'
 col1, col4 = st.columns([4, 1])
 with col1:
-    # Entrada de Origem com autocompletar e opção vazia
     st.session_state['origem'] = st.selectbox(
         "Origem:",
         cidades_opcoes,
@@ -78,14 +79,12 @@ with col1:
         format_func=lambda x: '' if x == '' else x
     )
 with col4:
-    # Botão para limpar o campo Origem
     if st.button("Limpar", key='limpar_origem'):
         st.session_state['origem'] = ''
 
 # Criar colunas para 'Destino' e botão 'Limpar'
 col3, col2 = st.columns([4, 1])
 with col3:
-    # Entrada de Destino com autocompletar e opção vazia
     st.session_state['destino'] = st.selectbox(
         "Destino:",
         cidades_opcoes,
@@ -94,7 +93,6 @@ with col3:
         format_func=lambda x: '' if x == '' else x
     )
 with col2:
-    # Botão para limpar o campo Destino
     if st.button("Limpar", key='limpar_destino'):
         st.session_state['destino'] = ''
 
@@ -121,7 +119,10 @@ if st.button("Pesquisar"):
             for i, rota in enumerate(rotas_detalhadas, 1):
                 st.write(f"Rota {i}")
                 for trecho in rota:
-                    texto_trecho = f"- {trecho['origem']} -> {trecho['destino']} | Prefixo: {trecho['prefixo']} | Linha: {trecho['linha']}"
+                    texto_trecho = (
+                        f"- {trecho['origem']} -> {trecho['destino']} "
+                        f"| Prefixo: {trecho['prefixo']} | Linha: {trecho['linha']} | Empresa: {trecho['empresa']}"
+                    )
                     st.write(texto_trecho)
         else:
             st.write(f"Nenhuma rota encontrada de {origem} para {destino} com até {max_conexoes} conexões.")
